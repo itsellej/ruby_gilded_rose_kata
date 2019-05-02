@@ -7,6 +7,8 @@ def update_quality(items)
       updater = SulfurasQualityUpdater.new
     elsif item.name.include?('Backstage passes')
       updater = BackstagePassesQualityUpdater.new
+    elsif item.name.include?('Conjured')
+      updater = ConjuredQualityUpdater.new
     else
       updater = GeneralQualityUpdater.new
     end
@@ -83,6 +85,18 @@ class BackstagePassesQualityUpdater < GeneralQualityUpdater
       item.quality = 0
     else
       item.quality += 1
+    end
+
+    validate_quality_level(item)
+  end
+end
+
+class ConjuredQualityUpdater < GeneralQualityUpdater
+  def update_quality(item)
+    if item.sell_in <= 0
+      item.quality -= 4
+    else
+      item.quality -= 2
     end
 
     validate_quality_level(item)
