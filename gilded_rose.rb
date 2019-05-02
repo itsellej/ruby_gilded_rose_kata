@@ -1,20 +1,8 @@
 def update_quality(items)
   items.each do |item|
-    p item
-    if item.name.include?('Aged Brie')
-      updater = AgedBrieQualityUpdater.new
-    elsif item.name.include?('Sulfuras')
-      updater = SulfurasQualityUpdater.new
-    elsif item.name.include?('Backstage passes')
-      updater = BackstagePassesQualityUpdater.new
-    elsif item.name.include?('Conjured')
-      updater = ConjuredQualityUpdater.new
-    else
-      updater = GeneralQualityUpdater.new
-    end
-
+    updater_type = UpdaterValidator.get_name(item.name)
+    updater = UpdaterFactory.select(updater_type)
     updater.update_item(item)
-    p item
   end
 end
 
@@ -48,6 +36,7 @@ class GeneralQualityUpdater
 end
 
 class AgedBrieQualityUpdater < GeneralQualityUpdater
+
   def update_quality(item)
     if item.sell_in <= 0
       item.quality += 2
@@ -60,6 +49,7 @@ class AgedBrieQualityUpdater < GeneralQualityUpdater
 end
 
 class SulfurasQualityUpdater < GeneralQualityUpdater
+
   def update_quality(item)
     validate_quality_level(item)
   end
@@ -68,14 +58,13 @@ class SulfurasQualityUpdater < GeneralQualityUpdater
     item.sell_in = item.sell_in
   end
 
-  private
-
   def validate_quality_level(item)
     item.quality = 80
   end
 end
 
 class BackstagePassesQualityUpdater < GeneralQualityUpdater
+
   def update_quality(item)
     if item.sell_in.between?(6, 10)
       item.quality += 2
@@ -86,20 +75,46 @@ class BackstagePassesQualityUpdater < GeneralQualityUpdater
     else
       item.quality += 1
     end
-
     validate_quality_level(item)
   end
 end
 
 class ConjuredQualityUpdater < GeneralQualityUpdater
-  def update_quality(item)
-    if item.sell_in <= 0
-      item.quality -= 4
-    else
-      item.quality -= 2
-    end
 
+  def update_quality(item)
+    item.sell_in <= 0 ? item.quality -= 4 : item.quality -= 2
     validate_quality_level(item)
+  end
+end
+
+class UpdaterFactory
+  UPDATER_TYPES = {
+    'Aged Brie' => AgedBrieQualityUpdater,
+    'Sulfuras' => SulfurasQualityUpdater,
+    'Backstage passes' => BackstagePassesQualityUpdater,
+    'Conjured' => ConjuredQualityUpdater,
+    'Other' => GeneralQualityUpdater
+  }.freeze
+
+  def self.select(item_name)
+    UPDATER_TYPES[item_name].new
+  end
+end
+
+class UpdaterValidator
+  UPDATER_TYPES =
+    ['Aged Brie', 'Sulfuras', 'Backstage passes', 'Conjured'].freeze
+
+  def self.get_name(item_name)
+    valid?(item_name) ? get_type(item_name) : 'Other'
+  end
+
+  def self.get_type(item_name)
+    UPDATER_TYPES.select { |t| item_name.include?(t) }.join
+  end
+
+  def self.valid?(item_name)
+    UPDATER_TYPES.map { |type| item_name.include?(type) }.include?(true)
   end
 end
 
