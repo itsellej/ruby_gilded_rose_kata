@@ -1,8 +1,9 @@
 def update_quality(items)
   items.each do |item|
-
-    if 'Aged Brie'.include?(item.name)
+    if item.name.include?('Aged Brie')
       updater = AgedBrieQualityUpdater.new
+    elsif item.name.include?('Sulfuras')
+      updater = SulfurasQualityUpdater.new
     else
       updater = GeneralQualityUpdater.new
     end
@@ -49,6 +50,22 @@ class AgedBrieQualityUpdater < GeneralQualityUpdater
     end
 
     validate_quality_level(item)
+  end
+end
+
+class SulfurasQualityUpdater < GeneralQualityUpdater
+  def update_quality(item)
+    validate_quality_level(item)
+  end
+
+  def update_sell_in(item)
+    item.sell_in = item.sell_in
+  end
+
+  private
+
+  def validate_quality_level(item)
+    item.quality = 80
   end
 end
 
